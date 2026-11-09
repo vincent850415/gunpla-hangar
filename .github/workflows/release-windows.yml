@@ -38,4 +38,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create $env:GITHUB_REF_NAME releases/*.zip releases/*.sha256 --verify-tag --title "Gunpla Hangar $env:GITHUB_REF_NAME" --notes "Windows x64 portable edition. Includes local OCR models and Node.js. Extract the ZIP and double-click Start.cmd. Back up your collection before upgrading."
+          $assets = @(Get-ChildItem releases -File | Where-Object { $_.Name -match '\.(zip|sha256)$' } | ForEach-Object { $_.FullName })
+          if ($assets.Count -ne 2) { throw 'Expected one ZIP and one checksum file' }
+          gh release create $env:GITHUB_REF_NAME @assets --verify-tag --title "Gunpla Hangar $env:GITHUB_REF_NAME" --notes "Windows x64 portable edition. Includes local OCR models and Node.js. Extract the ZIP and double-click Start.cmd. Back up your collection before upgrading."
