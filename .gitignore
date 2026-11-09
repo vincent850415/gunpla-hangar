@@ -1,0 +1,10 @@
+node_modules/
+dist/
+public/ocr/
+public/paddle/
+test-results/
+*.traineddata
+*.log
+.env
+.env.*
+!.env.example
