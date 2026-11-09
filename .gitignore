@@ -1,7 +1,7 @@
 node_modules/
 dist/
-public/ocr/
-public/paddle/
+.release-work/
+releases/
 test-results/
 *.traineddata
 *.log

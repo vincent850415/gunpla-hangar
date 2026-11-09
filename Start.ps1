@@ -9,7 +9,8 @@ try {
     if ($_.Exception.Message -like '*already used*') { throw }
 }
 $nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
-$runtimePath = if ($nodeCommand) { $nodeCommand.Source } else { Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' }
+$bundledRuntime = Join-Path $projectPath 'runtime\node.exe'
+$runtimePath = if (Test-Path -LiteralPath $bundledRuntime) { $bundledRuntime } elseif ($nodeCommand) { $nodeCommand.Source } else { Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' }
 if (-not (Test-Path -LiteralPath $runtimePath)) { throw 'Node.js 22+ is required. Install Node.js, then run this launcher again.' }
 if (-not (Test-Path -LiteralPath (Join-Path $projectPath 'dist\index.html'))) { throw 'Missing build. Run npm install, npm run prepare:ocr, and npm run build first.' }
 $serverScript = Join-Path $projectPath 'scripts\serve.mjs'

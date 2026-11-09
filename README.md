@@ -2,17 +2,38 @@
 
 可在 Windows 本機使用的模型收藏小工具。將多張模型盒照匯入，讀取商品名稱、規格與比例，確認作品系列，補上價格／存放位置，最後匯出 Excel。
 
-## 從 GitHub 首次安裝
+## Windows 可攜版（建議一般使用者）
 
-安裝 Node.js 22 以上，下載或 clone 本專案後執行：
+到本專案 GitHub Releases 下載 `Gunpla-Hangar-v版本-windows-x64.zip`，完整解壓後雙擊 `Start.cmd`。包含固定版本的 Node.js、PaddleOCR／Tesseract 模型與網頁建置結果，無須安裝套件或另外下載模型。適用 Windows x64；iOS／Android 與 Windows ARM 原生版尚未封裝。
+
+每次更新先在舊版「備份收藏」，關閉舊版本機服務後再開新版，必要時「還原備份」。收藏仍保存在相同瀏覽器與 localhost 網址，不會隨 ZIP 複製到另一台電腦，也不會自動同步。ZIP 同目錄提供 SHA-256，包內 `release-manifest.json` 記錄程式版本、commit、Node 版本及每個 OCR 檔案的雜湊。
+
+## 從 GitHub 原始碼安裝（開發用）
+
+安裝 Git LFS 與 Node.js 22 以上，以 Git clone 本專案後執行：
 
 ```powershell
+git lfs install
+git lfs pull
 npm install
-npm run prepare:ocr
 npm run build
 ```
 
-完成後雙擊 `Start.cmd`。OCR 模型、建置檔與本機測試輸出不納入 Git，首次準備模型時需要網路，之後辨識在本機執行。
+完成後雙擊 `Start.cmd`。`public/paddle` 與 `public/ocr` 已透過 Git LFS 納入版控；建置檔、ZIP、本機測試輸出與收藏備份不納入 Git。請使用 clone + LFS 或 Release 完整 ZIP，不要把 GitHub 自動產生的 Source code ZIP 當作可攜版。
+
+## 發布新版本
+
+一般 commit 只推送原始碼，不必製作 ZIP。正式發布時更新 `package.json` 版本、commit，並建立相同版本標籤，例如 `v0.3.1`：
+
+```powershell
+git push origin main
+git tag -a v0.3.1 -m "Release v0.3.1"
+git push origin v0.3.1
+```
+
+`.github/workflows/release-windows.yml` 會取回 Git LFS 模型、安裝鎖定套件、測試、建置、打包、驗證解壓後的程式，再建立 GitHub Release 並上傳 ZIP／SHA-256。每個正式版本各有一份 ZIP，不必手動重包。若任何步驟失敗，就不會發布 Release；可到 Actions 查看原因。需要 repository 允許 Actions，並有可用的 Git LFS 與 Actions 配額。
+
+本機也可執行 `npm run build`、`npm run package:windows` 與 `powershell -File scripts/check-portable.ps1`；ZIP 位於 `releases/`。打包腳本下載固定版本 Node.js 並核對官方 SHA-256；若同名 ZIP 已存在會停止，避免覆蓋。未來升級 Node 版本時，也需更新打包腳本與 workflow 的固定版本。
 
 ## Windows 啟動
 

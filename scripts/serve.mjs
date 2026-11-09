@@ -14,5 +14,6 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
   if (req.method === 'HEAD') res.end(); else fs.createReadStream(file).pipe(res);
 });
-server.listen(4173, '127.0.0.1', () => console.log('Hangar ready at http://127.0.0.1:4173'));
+const port = Number(process.env.PORT || 4173);
+server.listen(port, '127.0.0.1', () => console.log(`Hangar ready at http://127.0.0.1:${server.address().port}`));
 server.on('error', error => { console.error(error.message); process.exit(1); });

@@ -1,0 +1,41 @@
+name: Windows portable release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.2'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.25.0'
+      - name: Validate version and LFS objects
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Tag must match package.json version' }
+          git lfs fsck
+          if ($LASTEXITCODE -ne 0) { throw 'LFS validation failed' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+      - name: Package Windows x64
+        shell: powershell
+        run: ./scripts/package-windows.ps1
+      - name: Verify portable package
+        shell: powershell
+        run: ./scripts/check-portable.ps1
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME releases/*.zip releases/*.sha256 --verify-tag --title "Gunpla Hangar $env:GITHUB_REF_NAME" --notes "Windows x64 portable edition. Includes local OCR models and Node.js. Extract the ZIP and double-click Start.cmd. Back up your collection before upgrading."
