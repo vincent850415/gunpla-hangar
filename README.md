@@ -51,6 +51,16 @@ git push origin v0.3.1
 4. 填寫實際購入價格及存放位置，按「確認並儲存」。價格、比例與位置允許空白；零元會保留為數值 0。價格沒有自動換匯，請使用同一幣別。
 5. 點擊「匯出 Excel」。**只匯出已確認商品，並依作品系列分頁，不是按 HG／RG／MG 分頁。**
 
+### 連續確認與編輯保護（UX 階段 A）
+
+- 先切換「待確認」或設定搜尋／規格／系列，再按「開始確認」。本輪使用當下可見的待確認紀錄快照；「上一筆／下一筆」只切換，「確認並開啟下一筆」會等本機儲存成功才前進。最後顯示本輪摘要。
+- 關閉編輯、Escape 或切換上下筆時，未儲存修改會提供「繼續編輯」「捨棄修改」「儲存為待確認後離開」。儲存失敗會保留草稿，可重試或「下載含草稿的備份」；此備份中的目前草稿會標為待確認。
+- 有未儲存草稿或持久化進行中時，程式會註冊瀏覽器離頁提示。是否顯示原生提示仍由瀏覽器決定，無法保證防止所有關頁遺失。
+- 點擊盒照可放大、縮小或適合畫面，放大後用滑鼠／觸控拖曳。Escape 只關閉最上層視窗，關閉大圖會將焦點返回開圖按鈕。畫質以已保存影像為限。
+- 重新辨識先顯示新舊欄位比較，預設保留目前值；可逐欄勾選或全部採用。作品系列與商品線一起處理，價格與位置不被覆寫。採用後只改草稿，需重新確認儲存；取消、放棄或辨識失敗不修改原收藏。取消代表忽略本次結果，背景引擎可能仍會完成該張。
+
+本次實作範圍為 UX-01～03。批次設定、進階篩選、匯出預覽、手機清單調整、回收桶、v2 備份還原預覽與逐張匯入報告屬後續 B～D 階段，詳見 [UX 改善方案](docs/UX-IMPROVEMENT-PLAN.md)。
+
 ### Excel 格式
 
 | 比例 | 商品名稱 | 價格 | 存放位置 |
@@ -94,7 +104,7 @@ git push origin v0.3.1
 
 第五張仍把希臘字母 `ν` 讀為拉丁字母 `V`，會顯示專門提醒，請手動確認／改為 `Hi-ν`。不同輪讀取結果有差異也會提示，不能將 OCR 信心分數視為正確率保證。474 × 355 的 WebP 已能讀出名稱、HG、比例與作品，仍保留低解析度提醒。這五張的結果不代表所有盒照都能正確辨識。
 
-**既有收藏使用新流程：重新整理頁面 → 點擊該商品 →「重新辨識」。** 不需要再次匯入相同圖片。重新辨識會更新辨識欄位、保留已儲存的價格與位置，並重新開啟確認視窗；結果需重新確認才會匯出。
+**既有收藏使用新流程：重新整理頁面 → 點擊該商品 →「重新辨識」→ 比較並選擇採用欄位。** 不需要再次匯入相同圖片。辨識結果先作為候選，既有草稿、已保存價格、位置與確認狀態會保留；採用後須重新人工確認並儲存。
 
 回歸測試：`node scripts/check-low-resolution.mjs <HI-MOCK WebP 照片路徑>`。
 
@@ -128,6 +138,8 @@ npm test
 npm start
 # 另一個終端機執行，需已安裝 Microsoft Edge
 node scripts/check-ui.mjs
+# UX 階段 A 互動／錯誤分支回歸（另使用 4174，OCR stub 僅限此測試）
+node scripts/check-ux-a.mjs
 ```
 
 若使用 pnpm，已允許 esbuild 建置腳本；Tesseract 的非必要安裝腳本不執行。套件使用鎖檔固定版本。
@@ -138,8 +150,11 @@ node scripts/check-ui.mjs
 - `src/tesseract-recognition.js`：舊版 OCR 備援與圖片解碼。
 - `src/export.mjs`：依作品系列分頁、四欄 Excel 輸出。
 - `src/storage.js`：IndexedDB 與 JSON 備份驗證。
+- `src/collection-store.mjs`：所有收藏更新共用的可等待儲存入口，成功後才發布到畫面。
+- `src/Editor.jsx`、`src/editor-model.mjs`：草稿、連續確認與辨識候選採用；`src/Dialog.jsx`、`src/PhotoViewer.jsx`：共用對話框與照片核對。
 - `tests/`：解析、未知值與 Excel 匯出回讀測試。
 - `scripts/check-ui.mjs`：真實附件辨識、修改、重開持久化、下載 Excel、重複照片與手機版驗證。
+- `scripts/check-ux-a.mjs`：隔離資料測試確認佇列、容量失敗／重試、草稿離開保護、辨識失敗／取消／比較、鍵盤焦點與大圖滑鼠／觸控拖曳；輸出桌面及 390／360px 畫面到 `test-results/`。
 
 技術文件：[PaddleOCR JavaScript SDK](https://github.com/PaddlePaddle/PaddleOCR/blob/main/paddleocr-js/packages/core/README.md)、[Tesseract.js API](https://github.com/naptha/tesseract.js/blob/master/docs/api.md)、[ExcelJS](https://github.com/exceljs/exceljs)。
 

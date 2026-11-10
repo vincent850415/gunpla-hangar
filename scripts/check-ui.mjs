@@ -36,6 +36,18 @@ try {
   await page.getByRole('button', { name: '確認並儲存' }).click();
   await page.getByText('已儲存至這台裝置', { exact: true }).waitFor();
   await page.reload(); await page.locator('.record .confirmed').waitFor();
+  // Re-recognition is a candidate only: retain the saved price, position and
+  // confirmation until the user explicitly adopts and saves new fields.
+  await page.locator('.record').first().click();
+  await page.getByRole('button', { name: '重新辨識', exact: true }).click();
+  await page.locator('.comparison-modal').waitFor({ timeout: 180000 });
+  assert.equal(await page.locator('.comparison-modal input:checked').count(), 0);
+  await page.screenshot({ path: 'test-results/real-ocr-comparison.png', fullPage: true });
+  await page.getByRole('button', { name: '保留目前值', exact: true }).click();
+  assert.equal(await page.getByLabel('購入價格').inputValue(), '450');
+  assert.equal(await page.getByLabel('存放位置', { exact: true }).inputValue(), '書房 A 櫃第 2 層');
+  await page.getByRole('button', { name: '關閉編輯', exact: true }).click();
+  assert.equal(await page.locator('.record .confirmed').count(), 1);
   await page.getByRole('button', { name: '手動新增' }).click();
   await page.getByLabel('商品名稱', { exact: false }).fill('GUNDAM AERIAL');
   await page.getByLabel('作品系列', { exact: false }).fill('水星的魔女');

@@ -7,3 +7,56 @@
 .recognition-warnings{font-size:12px;line-height:1.8;background:#fff6e4;border:1px solid #eed9b1;border-radius:7px;color:#866534;padding:12px 14px;margin-bottom:12px}.recognition-warnings strong{font-size:12px}.recognition-warnings ul{padding-left:18px;margin:5px 0 0}
 @media(max-width:950px){.upload-actions{width:calc(100% - 66px)}}
 @media(max-width:680px){.upload-actions{width:calc(100% - 54px)}.grade-cell{min-width:0;flex-wrap:wrap}.grade-cell b{overflow-wrap:anywhere;max-width:100%}}
+
+/* Phase A: native top-layer dialogs, review navigation and photo inspection. */
+dialog{border:0;padding:0;color:inherit;max-width:calc(100vw - 24px)}
+dialog::backdrop{background:#152b2477;backdrop-filter:blur(5px)}
+dialog.editor{position:fixed;margin:auto;max-height:94dvh}
+dialog.editor[open]{display:flex;flex-direction:column;overflow:hidden}
+.editor-header,.queue-navigation,.editor-footer{flex-shrink:0}
+.editor-body{min-height:0;overflow:auto}
+.editor-fields input,.editor-fields select{scroll-margin-block:16px}
+.editor-footer{position:static}
+dialog.help-modal{position:fixed;margin:auto}
+.collection-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.queue-progress{font-size:14px;color:#647d4f;margin:10px 0 0}
+.queue-navigation{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 28px;background:#f3f6ec}
+.queue-navigation span{font-size:12px;color:#718165}
+.photo-open{display:block;width:100%;padding:0;position:relative;border-radius:8px}
+.photo-open img{display:block}
+.photo-open>span{position:absolute;bottom:8px;right:8px;background:#274737e8;color:#fff;font-size:12px;border-radius:5px;padding:6px 10px}
+.recognition-progress{font-size:14px;overflow-wrap:anywhere}
+.recognition-progress small{display:block;font-size:12px;line-height:1.7;margin-top:8px}
+.comparison-modal,.leave-modal{position:fixed;margin:auto;width:min(720px,calc(100vw - 24px));max-height:90dvh;overflow:auto;padding:24px;border-radius:12px;background:#fff;box-shadow:0 20px 100px #152d2433}
+.leave-modal{width:min(530px,calc(100vw - 24px))}
+.comparison-modal h2,.leave-modal h2{font-size:20px;margin:0 0 14px}
+.comparison-modal p,.leave-modal p{font-size:14px;line-height:1.8}
+.comparison-head,.comparison-row{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px;padding:12px 0;border-bottom:1px solid #e2e8da;font-size:14px;overflow-wrap:anywhere}
+.comparison-head{font-size:12px;color:#718165}
+.comparison-row>span:first-child{display:flex;align-items:center;gap:6px}
+.comparison-row input{width:18px;height:18px;flex-shrink:0;accent-color:#274737}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px}
+.dialog-actions button,.photo-controls button,.queue-navigation button,.editor button{min-height:44px}
+.save-recovery{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.photo-viewer{position:fixed;margin:auto;width:min(1150px,calc(100vw - 24px));height:min(850px,94dvh);max-height:94dvh;background:#f6f8f2;border-radius:12px;padding:18px;display:none;flex-direction:column;gap:12px}
+.photo-viewer[open]{display:flex}
+.photo-viewer header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.photo-viewer h2{font-size:18px;margin:0}
+.photo-viewer header button{min-height:44px;padding:8px 12px;border-radius:6px;background:#fff}
+.photo-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.photo-controls output{min-width:45px;text-align:center;font-size:14px}
+.photo-viewport{position:relative;overflow:hidden;flex:1;min-height:0;background:#e6ecdf;touch-action:none;cursor:grab;border-radius:8px}
+.photo-viewport:active{cursor:grabbing}
+.photo-viewport img{position:absolute;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none;transform-origin:center}
+.photo-viewer>p{font-size:12px;line-height:1.7;margin:0}
+.editor-fields label,.editor-fields input,.editor-fields select{font-size:14px}
+.editor-fields label>small,.input-hint,.photo-caption,.editor details,.editor .form-error{font-size:12px}
+@media(max-width:680px){
+  .collection-heading{gap:8px;align-items:flex-start}.collection-actions{max-width:120px}.collection-actions button{font-size:12px;min-height:44px}
+  dialog.editor{width:calc(100vw - 16px);max-width:calc(100vw - 16px);max-height:96dvh}
+  .editor-footer{position:static;padding:12px 10px;gap:4px}.editor-footer>div{flex-wrap:wrap;justify-content:flex-end;gap:6px}.editor-footer .primary,.editor-footer .secondary{white-space:normal;font-size:12px;padding:10px}
+  .queue-navigation{padding:10px 18px}.queue-navigation span{max-width:100px;text-align:center}
+  .comparison-modal,.leave-modal{padding:20px 16px}.comparison-head,.comparison-row{gap:8px;font-size:12px;grid-template-columns:1.15fr 1fr 1fr}
+  .comparison-row>span:first-child{align-items:flex-start}.dialog-actions{justify-content:stretch}.dialog-actions button{flex:1;white-space:normal}
+  .photo-viewer{padding:12px}.photo-controls{gap:6px}.photo-controls button{padding:10px;font-size:12px}
+}
