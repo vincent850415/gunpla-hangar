@@ -228,3 +228,43 @@ commit（若有）：
 下一 Session 建議起點：階段 B／UX-04～07；沿用 collection-store 的一致更新入口與 Dialog 焦點／Escape 機制，先抽出共用查詢，再接批次操作與匯出快照。階段 C 再一次完成穩定 ID、metadata 與 v2 遷移安全。
 commit（若有）：未提交、未推送、未發布；本輪 dist 已更新供本機驗證。
 ```
+
+### 2026-11-10／階段 B～D 完成
+
+本紀錄接續已推送的階段 A（`ad4b431`），目前 UX-01～10 的本機實作均已完成。下列是本輪的功能與驗收證據；手機實機、Safari、五張附件完整回歸及發布封裝仍不在已驗證範圍內。
+
+| 項目 | 完成內容 |
+| --- | --- |
+| UX-04 | 未刪除紀錄的位置自動完成、依最近更新排序／去空白精確去重；合法 checkbox 與列按鈕結構；選取目前結果、五筆批次設定／清空位置、系列預覽與整批相容性阻擋；查詢變更清除選取 |
+| UX-05 | 單一查詢函式供清單、確認佇列、匯出使用；搜尋與系列／位置／確認狀態／規格篩選；五種穩定排序、空價格最後、0 元保留；可清除的條件標籤與空結果復原入口 |
+| UX-06 | 全部／目前篩選已確認的範圍預覽、實際筆數與排除筆數、系列摘要、零筆禁用；預覽與下載同一快照；Excel 底層另排除 deletedAt |
+| UX-07 | 手機可見系列選單、位置與「位置未填」、主要名稱／位置／表單文字 14px、輔助資訊 12px；主要觸控項目 44px；已有收藏的新增照片區收合，辨識中保留進度與停止入口 |
+| UX-08 | 軟刪除與即時復原、刷新後回收桶復原；明確名稱的永久刪除確認；一般查找／統計／建議／確認／匯出排除刪除項；JSON 保留回收桶；相同照片位於回收桶時可直接復原 |
+| UX-09 | 穩定 ID、updatedAt／deletedAt、單一資料與 metadata envelope；原樣備援、讀回驗證才切換的 v1 本機遷移；v2 完整 JSON、備份修訂基準及提醒；v1／v2 型別／長度／價格／圖片／確認相容性驗證；還原方式選擇、預覽、ID／hash 衝突、逐筆採用、整份無效阻擋、失敗不發布及重試 |
+| UX-10 | 等待／辨識／成功／重複／格式／大小／解碼／辨識失敗／儲存失敗／取消的逐張工作項目；建立紀錄與辨識成功分開計數；原 ID 重試；完成此張後停止；刷新中斷明確提示並由已保存影像重試 |
+
+```text
+日期／Session：2026-11-10／剩餘 UX 階段 B～D 實作
+承接階段／UX 編號：B、C、D／UX-04～10；同時回歸 A／UX-01～03
+基準檢查：main 位於 ad4b431；開始前工作區乾淨，package.json 維持 0.3.1。未新增外部服務、套件或 OCR 演算法。
+完成內容：上述 UX-04～10；所有內容與 metadata 變更沿用同一可 await 串行入口，成功寫入單一 envelope 才發布 UI；辨識／匯入中禁用衝突修改。重新辨識採用時也同步處理 OCR 信心分數，避免保留舊分數。
+修改檔案：新增 src/collection-query.mjs、workspace-model.mjs、backup-model.mjs、storage-migration.mjs、import-jobs.mjs、CollectionDialogs.jsx；更新 main.jsx、Editor.jsx、editor-model.mjs、collection-store.mjs、storage.js、export.mjs、style.css；新增四組純邏輯測試與 scripts/check-ux-bcd.mjs；更新 tests/editor-model.test.mjs、scripts/check-ux-a.mjs、scripts/check-ui.mjs、README.md 與本文件。
+資料格式／遷移變更：
+  - 本機讀取來源升為 hangar-workspace-v2，保存 { version: 2, records, metadata }；metadata 包含內容修訂、逐筆修訂基準、上次下載時間與提醒關閉時間，不混入收藏陣列。
+  - 舊 hangar-records-v1 保留不清空；遷移前另保存 hangar-records-v1-original 原樣備援，寫入新 envelope 並讀回驗證後才設定 hangar-active-schema=2。任何階段寫入／讀回失敗均保留舊來源可讀，UI 暫停修改並提供升級重試。
+  - 既有有效 ID 不變；缺失／不合法或重複的本機 ID 在成功遷移時補為穩定 UUID；updatedAt 優先用有效 createdAt，否則用遷移時間，deletedAt 預設 null。後續編輯、確認、批次、軟刪除、復原、還原均由儲存入口處理修訂。
+  - JSON v2 為 { version: 2, exportedAt, records }，含確認、照片、商品線、辨識提醒／證據／引擎／信心分數及回收桶；完整還原可保留有效確認狀態，外部匯入與 v1 一律待確認。備份下載與修訂基準對應同一份快照。
+  - v1 有效 ID 保留，缺失 ID 依本檔 canonical 內容 SHA-256 與序號建立確定性識別；同名手動收藏不合併。不同舊檔的無 ID／無照片紀錄無法自動判定為同一件。
+已執行測試與結果：
+  - Node 原生測試 48/48 通過；新增 collection-query、backup-migration、restore-merge、import-jobs 四組測試，含兩種範圍 Excel 寫入回讀、空白／0、穩定非破壞排序、五筆批次相容性、遷移每階段容量失敗及讀回損壞、metadata 原子發布、同筆修改計數、v1／v2／手動／回收桶 fixture、同 ID／hash 衝突、重複匯入、壞資料與整份阻擋、停止／取消及逐張結果。補強後另重跑 editor-model 與 restore-merge 共 9/9 通過。
+  - Vite production build 通過；已確認既有 4173 的 scripts/serve.mjs 服務仍屬本專案，且 HTTP 入口內容與新 dist 一致，未終止該程序。建置仍有 OCR 相依套件 externalize、混合動靜態 import、大型 chunk 提示。
+  - scripts/check-ux-a.mjs 通過：已適配 v2 讀取、遷移 seed 與新篩選選單；保留確認佇列、草稿／容量失敗、辨識候選、巢狀 Escape、Tab 與焦點返回、滑鼠及觸控拖曳回歸。
+  - scripts/check-ux-bcd.mjs 通過：隔離 4175 與 Edge context，驗證五筆批次／清空／整批不相容阻擋、篩選清選、兩範圍 XLSX 回讀、空匯出禁用、軟刪除／復原／刷新／永久刪除、完整與外部還原、重複 v2 不增筆、逐筆採用與預設保留、無效阻擋、容量失敗重試、遷移失敗可讀與重試、七張混合匯入報告、原 ID 重試、回收桶重複復原、停止兩張未開始工作及刷新中斷影像重試。容量錯誤由 IDB put 注入，未實際塞滿使用者磁碟。
+  - scripts/check-ui.mjs 在新 production dist 通過：真實 sample.jpg 雙張本機 OCR 為 RX-78-2 GUNDAM／HGUC 宇宙世紀／HG／1/144，真實重新辨識比較與放棄、編輯／刷新、Excel 預覽及分頁四欄回讀、未確認排除、重複照片、v2 外部匯入預覽及重新確認；對外連線阻擋且無對外請求，無瀏覽器錯誤。
+  - 1440×1080、390×844、360×800 截圖已檢查；手機可操作系列篩選、看位置、編輯與確認，無整頁水平捲動。截圖含 ux-b-*、ux-c-*、ux-d-*、ux-bcd-mobile-*、ux-a-*，以及 production export-preview.png／restore-preview.png／real-ocr-comparison.png，皆位於忽略版控的 test-results/。
+  - PATH 無 npm，透過既有 bundled Node 執行 node --test、node node_modules/vite/bin/vite.js build 與上述腳本；未變更全域工具。
+未執行測試及原因：沒有手機實機／Safari 驗證；本輪僅有 public/sample.jpg，未提供額外四張照片，未執行五張附件回歸；原生 beforeunload 提示是否出現仍由瀏覽器決定；未製作可攜版或發佈 Release。
+已知限制：取消編輯器重新辨識只忽略候選，背景引擎可能仍完成本張；匯入報告與未保存的原始 File 不跨刷新保存，但已保存的錯誤照片可重試；v2 新變更不回寫舊 key，切回舊程式不會看到升級後新增內容，應使用新版或 JSON 轉移。這些限制已於 UI／README 說明。
+下一步：使用者實際收藏試用與手機實機／Safari 驗證；若要發佈，另依指示更新版本、製作可攜包並驗證。此方案沒有尚待本機實作的 UX 編號。
+commit（若有）：本輪尚未提交／推送／發布；dist 已更新供本機使用。階段 A 先前的推送為 ad4b431。
+```

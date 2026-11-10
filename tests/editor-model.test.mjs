@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyRecognition, asDraft, confirmationIds, confirmationSummary, draftSignature, queueTarget, validateDraft } from '../src/editor-model.mjs';
 
-const record = { id: 'one', name: 'RX-78-2', series: 'UC 宇宙世紀', productLine: 'HGUC', grade: 'HG', scale: '1/144', price: 0, location: 'A 櫃', confirmed: true, evidence: 'old', warnings: ['old warning'], ocrEngine: 'old engine' };
+const record = { id: 'one', name: 'RX-78-2', series: 'UC 宇宙世紀', productLine: 'HGUC', grade: 'HG', scale: '1/144', price: 0, location: 'A 櫃', confirmed: true, evidence: 'old', warnings: ['old warning'], ocrEngine: 'old engine', ocrConfidence: 97 };
 test('dirty compares editable content, including zero vs blank, rather than object identity', () => {
   const draft = asDraft(record);
   assert.equal(draftSignature(draft), draftSignature({ ...draft, price: '0', status: 'ready' }));
@@ -18,6 +18,7 @@ test('recognition adoption updates only selected fields, coherent series and evi
   assert.equal(next.name, 'new'); assert.equal(next.series, 'SEED'); assert.equal(next.grade, 'HG');
   assert.equal(next.price, 0); assert.equal(next.location, 'A 櫃'); assert.equal(next.confirmed, false);
   assert.equal(next.evidence, 'new evidence'); assert.equal(next.ocrEngine, 'new engine');
+  assert.equal(next.ocrConfidence, null);
   assert.ok(!next.warnings.includes('old warning')); assert.ok(next.warnings.length === 2);
   assert.equal(validateDraft(next, true).record.productLine, '');
   assert.equal(draftSignature(draft), signature); assert.equal(record.confirmed, true);

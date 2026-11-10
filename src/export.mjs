@@ -14,7 +14,7 @@ export async function makeWorkbook(records) {
   workbook.created = new Date();
   const groups = new Map();
   for (const record of records) {
-    if (!record.confirmed) continue;
+    if (!record.confirmed || record.deletedAt) continue;
     const series = seriesLabel(record);
     if (!groups.has(series)) groups.set(series, []);
     groups.get(series).push(record);

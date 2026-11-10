@@ -36,7 +36,7 @@ async function setup(viewport = { width: 1440, height: 1080 }) {
   await page.goto(origin); await page.getByText('已儲存至這台裝置', { exact: true }).waitFor({ state: 'attached' });
   await page.evaluate(async rows => {
     const db = await new Promise((resolve, reject) => { const request = indexedDB.open('keyval-store', 1); request.onupgradeneeded = () => request.result.createObjectStore('keyval'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
-    await new Promise((resolve, reject) => { const tx = db.transaction('keyval', 'readwrite'); tx.objectStore('keyval').put(rows, 'hangar-records-v1'); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); db.close();
+    await new Promise((resolve, reject) => { const tx = db.transaction('keyval', 'readwrite'); for (const key of ['hangar-workspace-v2', 'hangar-active-schema', 'hangar-records-v1-original']) tx.objectStore('keyval').delete(key); tx.objectStore('keyval').put(rows, 'hangar-records-v1'); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); }); db.close();
   }, fixture);
   await page.reload(); await expect(page.locator('.record')).toHaveCount(4);
   return { page, context };
@@ -44,7 +44,7 @@ async function setup(viewport = { width: 1440, height: 1080 }) {
 async function stored(page) {
   return page.evaluate(() => new Promise((resolve, reject) => {
     const request = indexedDB.open('keyval-store', 1);
-    request.onsuccess = () => { const db = request.result; const get = db.transaction('keyval').objectStore('keyval').get('hangar-records-v1'); get.onsuccess = () => { resolve(get.result); db.close(); }; get.onerror = () => reject(get.error); };
+    request.onsuccess = () => { const db = request.result; const get = db.transaction('keyval').objectStore('keyval').get('hangar-workspace-v2'); get.onsuccess = () => { resolve(get.result.records); db.close(); }; get.onerror = () => reject(get.error); };
     request.onerror = () => reject(request.error);
   }));
 }
@@ -67,7 +67,7 @@ try {
   await button(page, '上一筆').click(); await expect(page.getByLabel('購入價格')).toHaveValue('');
   await page.getByLabel('購入價格').fill('0'); await button(page, '確認並開啟下一筆').click();
   await expect(page.locator('.queue-progress')).toHaveText('第 2／共 3 筆');
-  assert.equal((await stored(page)).find(r => r.id === 'A').price, '0');
+  assert.equal(Number((await stored(page)).find(r => r.id === 'A').price), 0);
   await page.getByLabel('商品名稱', { exact: false }).fill('修改 B');
   await button(page, '下一筆').click(); await button(page, '儲存為待確認後離開').click();
   await expect(page.locator('.queue-progress')).toHaveText('第 3／共 3 筆');
@@ -116,7 +116,7 @@ try {
   await expect(page.getByLabel('購入價格')).toHaveValue('123');
   await button(page, '重新辨識').click(); await page.getByLabel('採用新系列／商品線', { exact: true }).check();
   await button(page, '採用勾選欄位').click();
-  await expect(page.getByLabel('作品系列', { exact: false })).toHaveValue('HGBF 鋼彈創鬥者');
+  await expect(page.locator('.editor').getByLabel('作品系列', { exact: false })).toHaveValue('HGBF 鋼彈創鬥者');
   await expect(page.getByLabel('商品名稱', { exact: false })).toHaveValue('模型 D');
   await expect(page.getByLabel('購入價格')).toHaveValue('123'); await expect(page.getByLabel('存放位置', { exact: true })).toHaveValue('原位置');
   assert.deepEqual((await stored(page)).find(r => r.id === 'D'), original);
@@ -145,7 +145,7 @@ try {
   await page.keyboard.press('Escape'); await button(page, '捨棄修改').click();
   assert.deepEqual((await stored(page)).find(r => r.id === 'D'), adopted);
   await page.locator('.record').filter({ hasText: '修改 B' }).click();
-  await page.evaluate(() => { window.failWrites = true; }); page.once('dialog', dialog => dialog.accept());
+  await page.evaluate(() => { window.failWrites = true; });
   await button(page, '刪除收藏').click(); await expect(page.locator('.editor .form-error')).toContainText('刪除儲存失敗');
   assert.equal((await stored(page)).length, 4);
   await page.evaluate(() => { window.failWrites = false; }); await button(page, '關閉編輯').click();

@@ -3,7 +3,7 @@ import { parseSeriesLabel, seriesLabel } from './product-lines.mjs';
 
 export const asDraft = record => ({ ...record, series: seriesLabel(record) });
 export function draftSignature(draft) {
-  return JSON.stringify(['name', 'series', 'grade', 'scale', 'price', 'location', 'confirmed', 'evidence', 'warnings', 'ocrEngine'].map(key =>
+  return JSON.stringify(['name', 'series', 'grade', 'scale', 'price', 'location', 'confirmed', 'evidence', 'warnings', 'ocrEngine', 'ocrConfidence'].map(key =>
     key === 'price' ? (draft.price === '' || draft.price == null ? '' : String(draft.price)) : draft[key] ?? ''));
 }
 export function validateDraft(draft, confirm) {
@@ -22,7 +22,7 @@ export function applyRecognition(draft, result, keys) {
   for (const key of keys) if (comparisonFields.some(([field]) => field === key)) next[key] = candidate[key] || '';
   // Evidence always belongs to the candidate, including on partial adoption.
   // Explicitly disclose that retained fields may disagree with this evidence.
-  return { ...next, confirmed: false, evidence: result.evidence || '', ocrEngine: result.ocrEngine || '',
+  return { ...next, confirmed: false, evidence: result.evidence || '', ocrEngine: result.ocrEngine || '', ocrConfidence: result.ocrConfidence ?? null,
     warnings: [...(result.warnings || []), ...(keys.length < comparisonFields.length ? ['部分欄位保留原值；下方辨識證據來自新一輪結果，請逐欄核對。'] : [])] };
 }
 export const confirmationIds = visible => visible.filter(r => !r.confirmed && !r.deletedAt && r.status !== 'processing').map(r => r.id);

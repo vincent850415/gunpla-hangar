@@ -7,7 +7,7 @@ import { applyRecognition, asDraft, comparisonFields, draftSignature, validateDr
 import { Dialog } from './Dialog';
 import { PhotoViewer } from './PhotoViewer';
 
-export function Editor({ record, onClose, onSave, onSaved, onDelete, onBackup, queue, onMove, canPrevious, canNext }) {
+export function Editor({ record, locations = [], onClose, onSave, onSaved, onDelete, onBackup, queue, onMove, canPrevious, canNext }) {
   const [draft, setDraft] = useState(() => asDraft(record)), [baseline, setBaseline] = useState(() => draftSignature(asDraft(record)));
   const [error, setError] = useState(''), [saveFailed, setSaveFailed] = useState(false), [saving, setSaving] = useState(false);
   const [leave, setLeave] = useState(null), [viewer, setViewer] = useState(false);
@@ -51,7 +51,7 @@ export function Editor({ record, onClose, onSave, onSaved, onDelete, onBackup, q
   }
   async function retry() {
     const token = ++request.current;
-    setRecognizing(true); setCandidate(null); setSelected([]); setError(''); setProgress('準備辨識引擎');
+    setRecognizing(true); setCandidate(null); setSelected([]); setError(''); setSaveFailed(false); setProgress('準備辨識引擎');
     try {
       const result = await recognize(record.image, message => {
         if (mounted.current && token === request.current) setProgress(message.status === 'recognizing text' ? `辨識文字 ${Math.round(message.progress * 100)}%` : '準備辨識引擎');
@@ -78,8 +78,8 @@ export function Editor({ record, onClose, onSave, onSaved, onDelete, onBackup, q
       <label>商品名稱 <span>*</span><input autoFocus maxLength={200} placeholder="例如 RX-78-2 GUNDAM" {...field('name')}/></label>
       <label>作品系列 <span>*</span><input list="series-options" maxLength={100} placeholder="選擇或輸入自訂作品系列" {...field('series')}/><datalist id="series-options">{[...SERIES, ...Object.entries(PRODUCT_LINES).map(([productLine, series]) => seriesLabel({ productLine, series }))].map(s => <option key={s} value={s}/>)}</datalist><small>可填 HGUC 宇宙世紀、HGBF 鋼彈創鬥者；Excel 依此名稱分頁。</small></label>
       <div className="field-pair"><label>規格 <span>*</span><select {...field('grade')}>{GRADES.map(g => <option key={g}>{g}</option>)}</select></label><label>比例<input placeholder="例如 1/144、無比例" maxLength={50} {...field('scale')}/></label></div>
-      <div className="field-pair"><label>購入價格<input type="number" min="0" step="any" placeholder="可稍後填寫" {...field('price')}/></label><label>存放位置<input placeholder="例如 書房 A 櫃第 2 層" maxLength={200} {...field('location')}/></label></div>
-      <p className="input-hint">價格與存放位置保留空白亦可；價格請使用同一幣別。</p>
+      <div className="field-pair"><label>購入價格<input type="number" min="0" step="any" placeholder="可稍後填寫" {...field('price')}/></label><label>存放位置<input list="editor-locations" placeholder="例如 書房 A 櫃第 2 層" maxLength={200} {...field('location')}/></label></div>
+      <datalist id="editor-locations">{locations.map(value => <option key={value} value={value}/>)}</datalist><p className="input-hint">價格與存放位置保留空白亦可；價格請使用同一幣別。</p>
       {error && <div className="form-error" role="alert">{error}{saveFailed && <div className="save-recovery"><button className="secondary" onClick={() => submit(false)} disabled={saving}>重試儲存為待確認</button><button className="secondary" onClick={backupDraft}>下載含草稿的備份</button></div>}</div>}
     </div></div>
     <div className="editor-footer"><button className="delete-button" aria-label="刪除收藏" disabled={saving || recognizing} onClick={() => requestLeave(remove)}><Trash2 size={17}/></button><div><button className="secondary" disabled={saving || recognizing || Boolean(candidate)} onClick={() => submit(false)}>儲存為待確認</button><button className="primary" disabled={saving || recognizing || Boolean(candidate)} onClick={() => submit(true)}><Check size={17}/>{saving ? '正在儲存…' : queue ? '確認並開啟下一筆' : '確認並儲存'}</button></div></div>
